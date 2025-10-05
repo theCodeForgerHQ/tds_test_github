@@ -1,39 +1,50 @@
-name: CI with Cache
+name: CI with Dependency Caching
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   pull_request:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
+          node-version: '20'
+      
       - name: Cache dependencies
-        id: prime-cache-550a115
+        id: cache
         uses: actions/cache@v4
         with:
-          path: node_modules
-          key: cache-550a115
-
-      - name: Echo cache result
+          path: |
+            node_modules
+            ~/.npm
+          key: cache-550a115-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            cache-550a115-${{ runner.os }}-
+      
+      - name: prime-cache-550a115
         run: |
-          echo "Cache hit status: ${{ steps.prime-cache-550a115.outputs.cache-hit }}"
-
+          if [ "${{ steps.cache.outputs.cache-hit }}" == "true" ]; then
+            echo "Cache hit! Dependencies restored from cache."
+          else
+            echo "Cache miss! Dependencies will be installed and cached."
+          fi
+      
       - name: Install dependencies
-        run: npm install
-
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      
       - name: Run tests
-        run: npm test
+        run: |
+          echo "Running tests..."
+          # Add your test commands here
+          # npm test
