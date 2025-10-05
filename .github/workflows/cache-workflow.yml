@@ -32,19 +32,11 @@ jobs:
             cache-550a115-${{ runner.os }}-
       
       - name: prime-cache-550a115
-        run: |
-          if [ "${{ steps.cache.outputs.cache-hit }}" == "true" ]; then
-            echo "Cache hit! Dependencies restored from cache."
-          else
-            echo "Cache miss! Dependencies will be installed and cached."
-          fi
+        run: echo "Cache hit result - ${{ steps.cache.outputs.cache-hit }}"
       
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       
       - name: Run tests
-        run: |
-          echo "Running tests..."
-          # Add your test commands here
-          # npm test
+        run: echo "Running tests..."
