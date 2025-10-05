@@ -1,0 +1,39 @@
+name: CI with Cache
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step to cache dependencies
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip  # Example for Python, change if needed
+          key: cache-550a115
+          restore-keys: |
+            cache-550a115
+
+      # Step to show cache hit/miss
+      - name: prime-cache-550a115
+        run: |
+          if [ "${{ steps.cache-deps.outputs.cache-hit }}" == "true" ]; then
+            echo "Cache hit!"
+          else
+            echo "Cache miss!"
+          fi
+
+      # Step to install dependencies (example for Python)
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
