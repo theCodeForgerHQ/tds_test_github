@@ -1,44 +1,68 @@
-name: CI with Dependency Caching
+name: Cache Demo Workflow
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
-  build:
+  cache-demo:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
-      
+          python-version: '3.11'
+
       - name: Cache dependencies
-        id: cache
+        id: cache-deps
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
-            ~/.npm
-          key: cache-550a115-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+            ~/.cache/pip
+            venv
+          key: cache-550a115-${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            cache-550a115-${{ runner.os }}-
-      
+            cache-550a115-${{ runner.os }}-pip-
+
       - name: prime-cache-550a115
         run: |
-          echo "Cache hit result: ${{ steps.cache.outputs.cache-hit }}"
-          exit 0
-      
+          if [ "${{ steps.cache-deps.outputs.cache-hit }}" == "true" ]; then
+            echo "✅ Cache hit! Dependencies restored from cache."
+            echo "Cache key: cache-550a115"
+          else
+            echo "❌ Cache miss! Dependencies will be downloaded and cached."
+            echo "Cache key: cache-550a115"
+          fi
+
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
-      
-      - name: Run tests
-        run: echo "Running tests..."
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          # Install some common dependencies to demonstrate caching
+          pip install requests pytest numpy pandas
+          # If you have a requirements.txt, uncomment:
+          # pip install -r requirements.txt
+
+      - name: Verify installation
+        run: |
+          source venv/bin/activate
+          python --version
+          pip list
+
+      - name: Run example task
+        run: |
+          source venv/bin/activate
+          python << 'EOF'
+          import requests
+          print("✅ Successfully using cached dependencies!")
+          print(f"Requests version: {requests.__version__}")
+          EOF
