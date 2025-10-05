@@ -32,7 +32,9 @@ jobs:
             cache-550a115-${{ runner.os }}-
       
       - name: prime-cache-550a115
-        run: echo "Cache hit result - ${{ steps.cache.outputs.cache-hit }}"
+        run: |
+          echo "Cache hit result: ${{ steps.cache.outputs.cache-hit }}"
+          exit 0
       
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
